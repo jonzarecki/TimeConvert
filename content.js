@@ -78,7 +78,7 @@ function highlightText(textNode, regex, cssClass) {
 // Function to process text nodes for date and time highlighting
 function processTextNode(textNode) {
     const dateRegex = /\b(\d{4}-\d{1,2}-\d{1,2}|\d{1,2}[/-]\d{1,2}[/-]\d{2,4}|\d{4}[/-]\d{1,2}[/-]\d{1,2}|\d{1,2} \w+ \d{4}|\w+ \d{1,2}, \d{4}|\d{1,2} \w+ \d{2}|\w+ \d{1,2} \w+ \d{2})\b/g;
-    const timeZoneRegex = /\b(0?[1-9]|1[0-2])(:[0-5][0-9])?(:[0-5][0-9])?\s*[APap][Mm]\s+[A-Z]{2,4}\b|\b\d{1,4}(:[0-5][0-9])?(:[0-5][0-9])?\s+[A-Za-z]+\s*time\b/;
+    const timeZoneRegex = /\b(?:\d{1,2}(?::\d{2})?(?::\d{2})?\s*(?:am|pm)?\s+)?(?:(?:GMT|UTC|EST|EDT|CST|CDT|MST|MDT|PST|PDT|AKST|AKDT|HST|HDT|AST|ADT|BST|WET|WEST|CET|CEST|EET|EEST|IST|PKT|NPT|BTT|JST|KST|PHT|IDT|SGT|AWST|ACST|AEST|AEDT|NZST|NZDT|[A-Y])|(?:[A-Za-z]+\s*(?:Standard|Daylight|Summer)?\s*Time))\b/i;
     highlightText(textNode, dateRegex, 'highlight-yellow');
     highlightText(textNode, timeZoneRegex, 'highlight-green');
 }
@@ -214,4 +214,9 @@ document.addEventListener('selectionchange', () => {
       selectedText: selectedText
     });
   }
+});
+
+// Listen for date conversion toast events
+window.addEventListener('showDateConversionToast', (event) => {
+  showToast(event.detail.message);
 });

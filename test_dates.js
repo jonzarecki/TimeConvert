@@ -62,7 +62,33 @@ const testCases = [
     { input: "18:60", expected: false, description: "Invalid minutes" },
     { input: "25:00", expected: false, description: "Invalid hours" },
     { input: "13/13/2024", expected: false, description: "Invalid month" },
-    { input: "32/01/2024", expected: true, description: "Invalid day, smoothed by libraries to +1 day" }
+    { input: "32/01/2024", expected: true, description: "Invalid day, smoothed by libraries to +1 day" },
+
+    // Timezone conversion tests
+    { 
+        input: "2024-01-25T18:00:00+05:30", 
+        expected: true, 
+        description: "ISO format with IST offset",
+        expectedUTC: "2024-01-25T12:30:00.000Z"  // 18:00 IST = 12:30 UTC
+    },
+    { 
+        input: "2024-01-25T15:00:00-05:00", 
+        expected: true, 
+        description: "ISO format with EST offset",
+        expectedUTC: "2024-01-25T20:00:00.000Z"  // 15:00 EST = 20:00 UTC
+    },
+    { 
+        input: "18:00 UTC+5:30", 
+        expected: true, 
+        description: "Time with IST offset",
+        expectedUTC: "12:30:00.000Z"  // Today at 18:00 IST = 12:30 UTC
+    },
+    { 
+        input: "3:00 PM EST", 
+        expected: true, 
+        description: "US time with EST timezone",
+        expectedUTC: "20:00:00.000Z"  // Today at 15:00 EST = 20:00 UTC
+    }
 ];
 
 // Function to run tests
@@ -77,19 +103,33 @@ function runTests() {
         try {
             const date = parseDateString(testCase.input);
             const result = !isNaN(date);
-            const success = result === testCase.expected;
+            let success = result === testCase.expected;
+            
+            // Additional timezone verification
+            if (success && testCase.expectedUTC) {
+                const utcTime = date.toISOString();
+                success = success && (utcTime.endsWith(testCase.expectedUTC) || utcTime === testCase.expectedUTC);
+            }
             
             if (success) {
                 passed++;
                 output += `<p class="pass">✅ Test ${index + 1} passed: ${testCase.description}<br>`;
                 if (result) {
-                    output += `&nbsp;&nbsp;&nbsp;Input: "${testCase.input}" => ${date.toISOString()}</p>`;
+                    output += `&nbsp;&nbsp;&nbsp;Input: "${testCase.input}" => ${date.toISOString()}`;
+                    if (testCase.expectedUTC) {
+                        output += `<br>&nbsp;&nbsp;&nbsp;Expected UTC: ${testCase.expectedUTC}`;
+                    }
+                    output += '</p>';
                 }
             } else {
                 failed++;
                 output += `<p class="fail">❌ Test ${index + 1} failed: ${testCase.description}<br>`;
                 output += `&nbsp;&nbsp;&nbsp;Input: "${testCase.input}"<br>`;
-                output += `&nbsp;&nbsp;&nbsp;Expected: ${testCase.expected}, Got: ${result}</p>`;
+                if (testCase.expectedUTC) {
+                    output += `&nbsp;&nbsp;&nbsp;Expected UTC: ${testCase.expectedUTC}<br>`;
+                    output += `&nbsp;&nbsp;&nbsp;Got UTC: ${date.toISOString()}<br>`;
+                }
+                output += `&nbsp;&nbsp;&nbsp;Expected parsing: ${testCase.expected}, Got: ${result}</p>`;
             }
         } catch (error) {
             failed++;

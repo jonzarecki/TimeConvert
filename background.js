@@ -88,6 +88,9 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
       // Convert to UTC
       const utcDate = date.toLocaleDateString("en-CA", { timeZone: "UTC" }) + ' ' + date.toLocaleTimeString("fr-FR", { timeZone: "UTC" });
 
+      // Convert to Israel time (Asia/Jerusalem)
+      const israelDate = date.toLocaleDateString("en-CA", { timeZone: "Asia/Jerusalem" }) + ' ' + date.toLocaleTimeString("fr-FR", { timeZone: "Asia/Jerusalem" });
+
       // Convert to IST (IST)
       const istDate = date.toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" }) + ' ' + date.toLocaleTimeString("fr-FR", { timeZone: "Asia/Kolkata" });
 
@@ -99,6 +102,7 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
 
       // Format the dates
       const utcString = `${padStringToFixedLength('UTC', 20)}: ${utcDate}`;
+      const israelString = `${padStringToFixedLength('Israel', 20)}: ${israelDate}`;
       const istString = `${padStringToFixedLength('IST', 20)}: ${istDate}`;
       const nyString = `${padStringToFixedLength('New York (US)', 20)}: ${nyDate}`;
       const centralString = `${padStringToFixedLength('Central (US)', 20)}: ${centralDate}`;
@@ -106,26 +110,27 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
       // Display the results
       chrome.scripting.executeScript({
         target: { tabId: tab.id },
-        func: showConversionResults,
-        args: [selectedText, utcString, istString, nyString, centralString]
+        func: (selectedText, utcString, israelString, istString, nyString, centralString) => {
+          // Copy all times to clipboard
+          const input = document.createElement("textarea");
+          input.value = `${israelString}\n${utcString}\n${istString}\n${nyString}\n${centralString}`;
+          document.body.appendChild(input);
+          input.select();
+          document.execCommand("copy");
+          document.body.removeChild(input);
+
+          // Show toast using the content script's showToast
+          const event = new CustomEvent('showDateConversionToast', {
+            detail: {
+              message: `Input ${selectedText}\n\n${israelString}\n${utcString}\n${istString}\n${nyString}\n${centralString}`
+            }
+          });
+          window.dispatchEvent(event);
+        },
+        args: [selectedText, utcString, israelString, istString, nyString, centralString]
       });
     } else {
         showToast("Selected text is not a valid date format => " + selectedText, true);
     }
   }
 });
-
-// Function to show conversion results as an alert on the page
-function showConversionResults(selectedText, utcString, istString, nyString, centralString) {
-  // console.log(`${istString}\n\n${utcString}\n\n${nyString}\n\n${centralString}\n`);
-
-  // Copy the UTC date to clipboard in the page context
-  const input = document.createElement("textarea");
-  input.value = `${istString}\n${utcString}\n${nyString}\n${centralString}`;
-  document.body.appendChild(input);
-  input.select();
-  document.execCommand("copy");
-  document.body.removeChild(input);
-
-  showToast(`Input ${selectedText}\n\n${istString}\n${utcString}\n${nyString}\n${centralString}`);
-}
