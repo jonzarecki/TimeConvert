@@ -1,0 +1,38 @@
+{
+  "manifest_version": 3,
+  "name": "Date Converter",
+  "version": "0.1",
+  "description": "Highlights all mentions of date/time/datetime in yellow and Convert selected date and show popup and clip",
+  "permissions": [
+    "activeTab",
+    "scripting",
+    "contextMenus", "notifications", "clipboardRead", "clipboardWrite"
+  ],
+  "host_permissions": [
+    "*://*.google.com/*",
+    "*://mail.google.com/*"
+  ],
+  "content_scripts": [
+    {
+      "matches": [
+        "<all_urls>",
+        "*://*.google.com/*",
+        "*://mail.google.com/*"
+      ],
+      "css": ["toastify.css"],
+      "js": ["toastify.js", "shared.js", "content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icon.png",
+      "48": "icon.png",
+      "128": "icon.png"
+    }
+  }
+}
