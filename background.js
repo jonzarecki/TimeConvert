@@ -1,3 +1,5 @@
+importScripts('shared.js');
+
 // Helper function to pad a string to a fixed length
 function padStringToFixedLength(inputString, fixedLength) {
   const str = String(inputString); // Convert input to a string
@@ -25,79 +27,6 @@ function createDateTime(year, month, day, hours, minutes, seconds) {
     minutes ?? now.getMinutes(),
     seconds ?? now.getSeconds()
   );
-}
-
-// Helper function to check if text is in time-only format
-function parseDateTime(input) {
-  const now = new Date(); // Get the current date and time
-  let date, time, hours, minutes, seconds;
-
-  // Define regular expressions for different date and time formats
-  const timeOnlyRegex = /^(0?[1-9]|1[0-2]):([0-5][0-9])\s*([APap][mM])?$/; // Time formats (HH:mm or HH:mm AM/PM)
-  const timeWithSecondsRegex = /^(0?[1-9]|1[0-2]):([0-5][0-9]):([0-5][0-9])\s*([APap][mM])?$/; // Time with seconds (HH:mm:ss AM/PM)
-  const timeWithUnicodeAMPMRegex = /^(0?[1-9]|1[0-2]):([0-5][0-9])\s*[\u202F\s]?(AM|PM|am|pm)$/; // Time with non-breaking space and AM/PM (6:07 AM)
-  const fullDateTimeRegex = /^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\s(\d{1,2}),\s(\d{4})\s(0?[1-9]|1[0-2]):([0-5][0-9]):([0-5][0-9])\s*([APap][mM])?$/; // Full datetime (Nov 04, 2024 02:34:57 pm)
-  const dayDateRegex = /^(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday),\s([A-Za-z]+)\s(\d{1,2}),\s(\d{4})$/; // Day and date (Monday, Nov 4, 2024)
-  const monthYearRegex = /^([A-Za-z]+),\s(\d{4})$/; // Month and year only (November, 2024)
-  
-  try {
-    // Check the input format and parse accordingly
-    if (!isNaN(new Date(input))) {
-      date = new Date(input);
-  
-    } else if (fullDateTimeRegex.test(input)) {
-      const match = input.match(fullDateTimeRegex);
-      const month = new Date(`${match[1]} 1, 2000`).getMonth();
-      date = createDateTime(
-        parseInt(match[3]), month, parseInt(match[2]),
-        match[4] % 12 + (match[7] && match[7].toLowerCase() === 'pm' ? 12 : 0),
-        parseInt(match[5]), parseInt(match[6])
-      );
-  
-    } else if (dayDateRegex.test(input)) {
-      const match = input.match(dayDateRegex);
-      const month = new Date(`${match[2]} 1, 2000`).getMonth();
-      date = createDateTime(parseInt(match[4]), month, parseInt(match[3]));
-  
-    } else if (monthYearRegex.test(input)) {
-      const match = input.match(monthYearRegex);
-      const month = new Date(`${match[1]} 1, 2000`).getMonth();
-      date = createDateTime(parseInt(match[2]), month, 1);
-  
-    } else if (timeWithSecondsRegex.test(input)) {
-      const match = input.match(timeWithSecondsRegex);
-      hours = parseInt(match[1]) % 12 + (match[4] && match[4].toLowerCase() === 'pm' ? 12 : 0);
-      minutes = parseInt(match[2]);
-      seconds = parseInt(match[3]);
-      if (!match[4] && match[1] === "12") hours = 12; // Default 12:xx:xx to PM
-      date = createDateTime(null, null, null, hours, minutes, seconds);
-  
-    } else if (timeWithUnicodeAMPMRegex.test(input)) {
-      const match = input.match(timeWithUnicodeAMPMRegex);
-      hours = parseInt(match[1]) % 12 + (match[3].toLowerCase() === 'pm' ? 12 : 0);
-      minutes = parseInt(match[2]);
-      date = createDateTime(null, null, null, hours, minutes);
-  
-    } else if (timeOnlyRegex.test(input)) {
-      const match = input.match(timeOnlyRegex);
-      hours = parseInt(match[1]) % 12 + (match[3] && match[3].toLowerCase() === 'pm' ? 12 : 0);
-      minutes = parseInt(match[2]);
-      if (!match[3] && match[1] === "12") hours = 12; // Default 12:xx to PM if no AM/PM
-      date = createDateTime(null, null, null, hours, minutes);
-  
-    } else {
-      // If no format matches, return the current date and time
-      date = NaN;
-    }
-
-    return date;
-
-  } catch (error) {
-    message = "Date parsing error:" + error.message;
-    showToast(message, true);
-    return NaN; // Return NaN for any parsing errors
-  }
-  return date;
 }
 
 // Function to show toast notification via content script
@@ -139,8 +68,12 @@ chrome.runtime.onInstalled.addListener(() => {
 chrome.contextMenus.onClicked.addListener((info, tab) => {
   if (info.menuItemId === "convertDate" && info.selectionText) {
     const selectedText = trimToMaxLength(info.selectionText.trim(), 50);
-    date = parseDateTime(selectedText);
+    
+    date = parseDateString(selectedText);
+    // show date as string if not nan, if nan write nan
     message = "Date parsed:" + date;
+    showToast(message, true);
+
     // chrome.notifications.create({
     //         type: "basic",
     //         iconUrl: "icon.png", // Provide an icon image
@@ -178,7 +111,7 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
         args: [selectedText, utcString, istString, nyString, centralString]
       });
     } else {
-      showToast("Selected text is not a valid date format => " + selectedText, true);
+        showToast("Selected text is not a valid date format => " + selectedText, true);
     }
   }
 });
