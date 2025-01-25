@@ -64,6 +64,16 @@ chrome.runtime.onInstalled.addListener(() => {
   });
 });
 
+// Update context menu visibility based on text selection
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  if (request.type === "updateContextMenu") {
+    const date = parseDateString(request.selectedText);
+    chrome.contextMenus.update("convertDate", {
+      visible: !isNaN(date)
+    });
+  }
+});
+
 // Listen for context menu click event
 chrome.contextMenus.onClicked.addListener((info, tab) => {
   if (info.menuItemId === "convertDate" && info.selectionText) {
@@ -74,28 +84,17 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
     message = "Date parsed:" + date;
     showToast(message, true);
 
-    // chrome.notifications.create({
-    //         type: "basic",
-    //         iconUrl: "icon.png", // Provide an icon image
-    //         title: "Date Conversion In process",
-    //         message: message,
-    //         priority: 1
-    //     });
     if (!isNaN(date)) {
       // Convert to UTC
-      // const utcDate = new Date(date.toLocaleString("en-US", { timeZone: "UTC" }));
       const utcDate = date.toLocaleDateString("en-CA", { timeZone: "UTC" }) + ' ' + date.toLocaleTimeString("fr-FR", { timeZone: "UTC" });
 
       // Convert to IST (IST)
-      // const istDate = new Date(date.toLocaleString("en-US", { timeZone: "Asia/Kolkata" }));
       const istDate = date.toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" }) + ' ' + date.toLocaleTimeString("fr-FR", { timeZone: "Asia/Kolkata" });
 
       // Convert to New York time (America/New_York)
-      // const nyDate = new Date(date.toLocaleString("en-US", { timeZone: "America/New_York" }));
       const nyDate = date.toLocaleDateString("en-CA", { timeZone: "America/New_York" }) + ' ' + date.toLocaleTimeString("fr-FR", { timeZone: "America/New_York" });
 
       // Convert to CST Central timezone time (America/Chicago)
-      // const centralDate = new Date(date.toLocaleString("en-US", { timeZone: "America/Chicago" }));
       const centralDate = date.toLocaleDateString("en-CA", { timeZone: "America/Chicago" }) + ' ' + date.toLocaleTimeString("fr-FR", { timeZone: "America/Chicago" });
 
       // Format the dates

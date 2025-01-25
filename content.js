@@ -204,3 +204,14 @@ style.innerHTML = `
     }
 `;
 document.head.appendChild(style);
+
+// Add selection event handler
+document.addEventListener('selectionchange', () => {
+  const selectedText = window.getSelection().toString().trim();
+  if (selectedText) {
+    chrome.runtime.sendMessage({
+      type: "updateContextMenu",
+      selectedText: selectedText
+    });
+  }
+});
