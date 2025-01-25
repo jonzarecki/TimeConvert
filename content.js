@@ -179,14 +179,16 @@ style.innerHTML = `
 document.head.appendChild(style);
 
 // Add selection event handler
+let lastSelectedText = '';
 document.addEventListener('selectionchange', () => {
-  const selectedText = window.getSelection().toString().trim();
-  if (selectedText) {
-    chrome.runtime.sendMessage({
-      type: "updateContextMenu",
-      selectedText: selectedText
-    });
-  }
+    const selectedText = window.getSelection().toString().trim();
+    if (selectedText && selectedText !== lastSelectedText) {
+        lastSelectedText = selectedText;
+        chrome.runtime.sendMessage({
+            type: "updateContextMenu",
+            selectedText: selectedText
+        });
+    }
 });
 
 // Listen for date conversion toast events

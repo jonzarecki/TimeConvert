@@ -40,7 +40,8 @@ chrome.runtime.onInstalled.addListener(() => {
     chrome.contextMenus.create({
         id: "convertDate",
         title: "Convert Date",
-        contexts: ["selection"]
+        contexts: ["selection"],
+        visible: false
     });
 });
 
@@ -48,6 +49,16 @@ chrome.runtime.onInstalled.addListener(() => {
 chrome.contextMenus.onClicked.addListener((info, tab) => {
     if (info.menuItemId === "convertDate") {
         handleDateConversion(info.selectionText, tab.id);
+    }
+});
+
+// Listen for messages from content script
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+    if (request.type === "updateContextMenu") {
+        const date = parseDateString(request.selectedText);
+        chrome.contextMenus.update("convertDate", {
+            visible: !isNaN(date)
+        });
     }
 });
 
