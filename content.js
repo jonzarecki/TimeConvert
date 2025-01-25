@@ -1,23 +1,5 @@
-// Ensure showToast is defined in the global scope
-// No import needed, as showToast is available globally.
-
 // Keep track of processed text content
 const processedContent = new Set();
-
-// Function to check if an element is visible
-function isVisible(element) {
-    if (!element) return false;
-    
-    try {
-        const style = window.getComputedStyle(element);
-        return style &&
-               style.display !== 'none' && 
-               style.visibility !== 'hidden' && 
-               parseFloat(style.opacity) > 0;
-    } catch (e) {
-        return true; // If we can't determine visibility, assume it's visible
-    }
-}
 
 // Function to check if a node has already been processed
 function isProcessed(node) {
@@ -39,48 +21,44 @@ function highlightText(textNode, regex, cssClass) {
     
     if (!matches || isProcessed(textNode)) return;
     
-    // Mark this text as processed
     markProcessed(textNode);
     
-    const fragment = document.createDocumentFragment();
-    let lastIndex = 0;
-    
-    // Use exec to get all matches with their positions
-    let match;
-    regex = new RegExp(regex, 'g');  // Ensure we have the global flag
-    
-    while ((match = regex.exec(text)) !== null) {
-        // Add text before the match
-        if (match.index > lastIndex) {
-            fragment.appendChild(document.createTextNode(text.slice(lastIndex, match.index)));
+    try {
+        const fragment = document.createDocumentFragment();
+        let lastIndex = 0;
+        
+        regex = new RegExp(regex, 'g');
+        let match;
+        
+        while ((match = regex.exec(text)) !== null) {
+            if (match.index > lastIndex) {
+                fragment.appendChild(document.createTextNode(text.slice(lastIndex, match.index)));
+            }
+            
+            const highlightSpan = document.createElement('span');
+            highlightSpan.className = cssClass;
+            highlightSpan.textContent = match[0];
+            fragment.appendChild(highlightSpan);
+            
+            lastIndex = regex.lastIndex;
         }
         
-        // Create highlighted span for the match
-        const highlightSpan = document.createElement('span');
-        highlightSpan.className = cssClass;
-        highlightSpan.textContent = match[0];
-        fragment.appendChild(highlightSpan);
+        if (lastIndex < text.length) {
+            fragment.appendChild(document.createTextNode(text.slice(lastIndex)));
+        }
         
-        lastIndex = regex.lastIndex;
-    }
-    
-    // Add any remaining text after the last match
-    if (lastIndex < text.length) {
-        fragment.appendChild(document.createTextNode(text.slice(lastIndex)));
-    }
-    
-    // Replace the original text node with our fragment
-    if (textNode.parentNode) {
-        textNode.parentNode.replaceChild(fragment, textNode);
+        if (textNode.parentNode) {
+            textNode.parentNode.replaceChild(fragment, textNode);
+        }
+    } catch (error) {
+        handleError(error, 'highlightText');
     }
 }
 
 // Function to process text nodes for date and time highlighting
 function processTextNode(textNode) {
-    const dateRegex = /\b(\d{4}-\d{1,2}-\d{1,2}|\d{1,2}[/-]\d{1,2}[/-]\d{2,4}|\d{4}[/-]\d{1,2}[/-]\d{1,2}|\d{1,2} \w+ \d{4}|\w+ \d{1,2}, \d{4}|\d{1,2} \w+ \d{2}|\w+ \d{1,2} \w+ \d{2})\b/g;
-    const timeZoneRegex = /\b(?:\d{1,2}(?::\d{2})?(?::\d{2})?\s*(?:am|pm)?\s+)?(?:(?:GMT|UTC|EST|EDT|CST|CDT|MST|MDT|PST|PDT|AKST|AKDT|HST|HDT|AST|ADT|BST|WET|WEST|CET|CEST|EET|EEST|IST|PKT|NPT|BTT|JST|KST|PHT|IDT|SGT|AWST|ACST|AEST|AEDT|NZST|NZDT|[A-Y])|(?:[A-Za-z]+\s*(?:Standard|Daylight|Summer)?\s*Time))\b/i;
-    highlightText(textNode, dateRegex, 'highlight-yellow');
-    highlightText(textNode, timeZoneRegex, 'highlight-green');
+    highlightText(textNode, DATE_PATTERNS.DATE_REGEX, CSS_CLASSES.DATE_HIGHLIGHT);
+    highlightText(textNode, DATE_PATTERNS.TIME_ZONE_REGEX, CSS_CLASSES.TIMEZONE_HIGHLIGHT);
 }
 
 // Function to walk through DOM nodes
@@ -94,14 +72,11 @@ function walkDOM(node) {
         return;
     }
     
-    // Skip script and style elements
     if (node.tagName === 'SCRIPT' || node.tagName === 'STYLE') {
         return;
     }
     
-    // Process child nodes
-    const children = Array.from(node.childNodes);
-    children.forEach(child => walkDOM(child));
+    Array.from(node.childNodes).forEach(walkDOM);
 }
 
 // Single observer instance
@@ -110,20 +85,16 @@ let isProcessing = false;
 
 // Function to initialize highlighting
 function initializeHighlighting() {
-    // Clear the processed content set
     processedContent.clear();
     
-    // Clean up any existing observer
     if (observer) {
         observer.disconnect();
         observer = null;
     }
 
-    // Initial highlight
     console.log('Initial processing of document body');
     walkDOM(document.body);
 
-    // Create new observer
     observer = new MutationObserver(mutations => {
         if (isProcessing) return;
         isProcessing = true;
@@ -138,12 +109,13 @@ function initializeHighlighting() {
                     });
                 }
             });
+        } catch (error) {
+            handleError(error, 'MutationObserver');
         } finally {
             isProcessing = false;
         }
     });
 
-    // Start observing with more specific config
     observer.observe(document.body, {
         childList: true,
         subtree: true,
@@ -151,7 +123,7 @@ function initializeHighlighting() {
     });
 }
 
-// Function to ensure observer is running
+// Function to ensure observer is active
 function ensureObserverIsActive() {
     if (!observer) {
         console.log('Reinitializing observer...');
@@ -159,46 +131,47 @@ function ensureObserverIsActive() {
         return;
     }
 
-    // Check if any highlighted content exists
-    const highlightedElements = document.querySelectorAll('.highlight-yellow, .highlight-green');
+    const highlightedElements = document.querySelectorAll(
+        `.${CSS_CLASSES.DATE_HIGHLIGHT}, .${CSS_CLASSES.TIMEZONE_HIGHLIGHT}`
+    );
     if (highlightedElements.length === 0) {
         console.log('No highlights found, reprocessing...');
         initializeHighlighting();
     }
 }
 
-// Initialize only once when document is ready
+// Initialize when document is ready
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initializeHighlighting, { once: true });
 } else {
     initializeHighlighting();
 }
 
-// Periodically check if observer is still active and highlights exist
-setInterval(ensureObserverIsActive, 5000);  // Check every 5 seconds
+// Periodically check observer status
+setInterval(ensureObserverIsActive, TIME_CONSTANTS.CHECK_INTERVAL_MS);
 
 // Handle Gmail's specific events
 document.addEventListener('load', initializeHighlighting, true);
-window.addEventListener('hashchange', initializeHighlighting);  // For Gmail navigation
-window.addEventListener('popstate', initializeHighlighting);    // For browser navigation
+window.addEventListener('hashchange', initializeHighlighting);
+window.addEventListener('popstate', initializeHighlighting);
 
 // Listen for messages from the background script
 chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-  if (request.type === "showToast") {
-    showToast(request.message, request.isError);
-    sendResponse({success: true});
-  }
-  return true; // Keep the message channel open for sendResponse
+    if (request.type === "showToast") {
+        showToast(request.message, request.isError);
+        sendResponse({success: true});
+    }
+    return true;
 });
 
 // Add CSS for highlighting
 const style = document.createElement('style');
 style.innerHTML = `
-    .highlight-yellow { 
+    .${CSS_CLASSES.DATE_HIGHLIGHT} { 
         background-color: yellow; 
         color: black; 
     }
-    .highlight-green { 
+    .${CSS_CLASSES.TIMEZONE_HIGHLIGHT} { 
         background-color: green; 
         color: white; 
     }

@@ -23,7 +23,23 @@
     <div id="results"></div>
     <div id="summary" class="summary"></div>
 
+    <script>
+        // Mock Chrome APIs for testing
+        window.chrome = {
+            runtime: {
+                sendMessage: () => Promise.resolve()
+            }
+        };
+
+        // Mock showToast for testing
+        window.showToast = (message, isError = false) => {
+            console.log(`Toast: ${message}${isError ? ' (error)' : ''}`);
+        };
+    </script>
+    <script src="toastify.js"></script>
     <script src="shared.js"></script>
+    <script src="constants.js"></script>
+    <script src="utils.js"></script>
     <script src="test_dates.js"></script>
 </body>
 </html>
