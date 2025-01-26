@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Date Converter",
-  "version": "0.1",
-  "description": "Highlights all mentions of date/time/datetime in yellow and Convert selected date and show popup and clip",
+  "version": "0.1.0",
+  "description": "Automatically detects and converts dates between different formats. Features date highlighting and contextual conversions button.",
   "permissions": [
     "activeTab",
     "scripting",
