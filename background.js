@@ -100,8 +100,9 @@ async function handleDateConversion(selectedText, tabId) {
         await executeToastInTab(tabId, message);
     } catch (error) {
         console.error('Date conversion failed:', error);
+        const errorMessage = error.message || error.toString();
         try {
-            await executeToastInTab(tabId, '❌ Failed to convert date', true);
+            await executeToastInTab(tabId, `❌ Error: ${errorMessage}`, true);
         } catch (toastError) {
             console.error('Failed to show error toast:', toastError);
         }
