@@ -70,103 +70,48 @@ const TEST_CASES = {
         { input: "32/01/2024", expected: true, description: "Invalid day, smoothed by libraries to +1 day" }
     ],
     
-    TIMEZONE_CONVERSION_TESTS: [
-        {
-            input: "2024-01-31T10:00:00Z",  // UTC time
-            expected: true,
-            description: "UTC time conversion",
-            verify: (date) => {
-                const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-                console.log(`Test converting UTC to local timezone (${timeZone})`);
-                
-                // Get the expected offset in minutes for this timezone
-                const localDate = new Date(date);
-                const offsetMinutes = -localDate.getTimezoneOffset();
-                const offsetHours = Math.abs(Math.floor(offsetMinutes / 60));
-                const offsetMins = Math.abs(offsetMinutes % 60);
-                const offsetStr = `${offsetMinutes >= 0 ? '+' : '-'}${String(offsetHours).padStart(2, '0')}:${String(offsetMins).padStart(2, '0')}`;
-                
-                console.log(`Local timezone offset: ${offsetStr}`);
-                console.log(`Converted time: ${localDate.toLocaleString(undefined, {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    timeZone: timeZone,
-                    timeZoneName: 'short'
-                })}`);
-                
-                return !isNaN(date);
-            }
-        },
-        {
-            input: "18:00 EST",  // EST time
-            expected: true,
-            description: "EST to local timezone conversion",
-            verify: (date) => {
-                const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-                console.log(`Test converting EST to local timezone (${timeZone})`);
-                console.log(`Converted time: ${date.toLocaleString(undefined, {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                    timeZone: timeZone,
-                    timeZoneName: 'short'
-                })}`);
-                return !isNaN(date);
-            }
-        }
-    ]
+    TIMEZONE_CONVERSION_TESTS: []
 };
 
-// Function to run tests
-function runTests() {
-    const resultsDiv = document.getElementById('results');
-    const summaryDiv = document.getElementById('summary');
-    let passed = 0;
-    let failed = 0;
-    let output = '';
-    
-    // Run tests for each category
-    Object.entries(TEST_CASES).forEach(([category, tests]) => {
-        output += `<h3>${category}</h3>`;
-        
-        tests.forEach((testCase, index) => {
-            try {
-                const date = parseDateString(testCase.input);
-                const result = !isNaN(date);
-                const success = result === testCase.expected;
-                
-                if (success) {
-                    passed++;
-                    output += `<p class="pass">✅ ${testCase.description}<br>`;
-                    if (result) {
-                        output += `&nbsp;&nbsp;&nbsp;Input: "${testCase.input}" => ${date.toISOString()}</p>`;
-                    }
-                } else {
-                    failed++;
-                    output += `<p class="fail">❌ ${testCase.description}<br>`;
-                    output += `&nbsp;&nbsp;&nbsp;Input: "${testCase.input}"<br>`;
-                    output += `&nbsp;&nbsp;&nbsp;Expected: ${testCase.expected}, Got: ${result}</p>`;
-                }
-            } catch (error) {
-                failed++;
-                console.error(`Test case failed: ${testCase.description}`, error);
-                output += `<p class="fail">❌ ${testCase.description}<br>`;
-                output += `&nbsp;&nbsp;&nbsp;Input: "${testCase.input}"<br>`;
-                output += `&nbsp;&nbsp;&nbsp;Error: ${error.message}</p>`;
+// Function to create timezone verification test
+function createTimezoneTest(input, description) {
+    return {
+        input,
+        expected: true,
+        description,
+        verify: (date) => {
+            const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+            const message = `Test converting ${description} to local timezone (${timeZone})`;
+            
+            // Get the expected offset in minutes for this timezone
+            const localDate = new Date(date);
+            const offsetMinutes = -localDate.getTimezoneOffset();
+            const offsetHours = Math.abs(Math.floor(offsetMinutes / 60));
+            const offsetMins = Math.abs(offsetMinutes % 60);
+            const offsetStr = `${offsetMinutes >= 0 ? '+' : '-'}${String(offsetHours).padStart(2, '0')}:${String(offsetMins).padStart(2, '0')}`;
+            
+            // Log info if console is available
+            if (typeof console !== 'undefined') {
+                console.log(message);
+                console.log(`Local timezone offset: ${offsetStr}`);
+                console.log(`Converted time: ${localDate.toLocaleString()}`);
             }
-        });
-    });
-    
-    resultsDiv.innerHTML = output;
-    
-    // Display summary
-    const total = Object.values(TEST_CASES).reduce((sum, tests) => sum + tests.length, 0);
-    summaryDiv.innerHTML = `
-        <h2>Test Summary:</h2>
-        <p>Total Tests: ${total}</p>
-        <p class="pass">Passed: ${passed}</p>
-        <p class="fail">Failed: ${failed}</p>
-    `;
+            
+            return !isNaN(date);
+        }
+    };
 }
 
-// Run tests when the page loads
-window.onload = runTests;
+// Add timezone conversion tests
+TEST_CASES.TIMEZONE_CONVERSION_TESTS = [
+    createTimezoneTest("2024-01-31T10:00:00Z", "UTC time conversion"),
+    createTimezoneTest("18:00 EST", "EST to local timezone conversion")
+];
+
+// Export for Node.js, attach to window for browser
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = { TEST_CASES, createTimezoneTest };
+} else if (typeof window !== 'undefined') {
+    window.TEST_CASES = TEST_CASES;
+    window.createTimezoneTest = createTimezoneTest;
+}

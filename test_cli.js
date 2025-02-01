@@ -1,5 +1,6 @@
 // Import required modules
 const { parseDateString } = require('./shared.js');
+const { TEST_CASES } = require('./test_dates.js');
 
 // Mock browser environment
 global.window = {
@@ -19,50 +20,6 @@ const colors = {
     yellow: "\x1b[33m",
     blue: "\x1b[34m",
     white: "\x1b[37m"
-};
-
-// Import test cases
-const TEST_CASES = {
-    TIME_FORMATS: [
-        { input: "1800", expected: true, description: "24-hour time without separator" },
-        { input: "18:00", expected: true, description: "24-hour time with colon" },
-        { input: "9", expected: true, description: "Single digit hour" },
-        { input: "09:00", expected: true, description: "24-hour time with leading zero" }
-    ],
-    TIMEZONE_CONVERSION_TESTS: [
-        {
-            input: "2024-01-31T10:00:00Z",  // UTC time
-            expected: true,
-            description: "UTC time conversion",
-            verify: (date) => {
-                const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-                console.log(`\n${colors.blue}Test converting UTC to local timezone (${timeZone})${colors.reset}`);
-                
-                // Get the expected offset in minutes for this timezone
-                const localDate = new Date(date);
-                const offsetMinutes = -localDate.getTimezoneOffset();
-                const offsetHours = Math.abs(Math.floor(offsetMinutes / 60));
-                const offsetMins = Math.abs(offsetMinutes % 60);
-                const offsetStr = `${offsetMinutes >= 0 ? '+' : '-'}${String(offsetHours).padStart(2, '0')}:${String(offsetMins).padStart(2, '0')}`;
-                
-                console.log(`${colors.yellow}Local timezone offset: ${offsetStr}${colors.reset}`);
-                console.log(`${colors.yellow}Converted time: ${localDate.toLocaleString()}${colors.reset}`);
-                
-                return !isNaN(date);
-            }
-        },
-        {
-            input: "18:00 EST",  // EST time
-            expected: true,
-            description: "EST to local timezone conversion",
-            verify: (date) => {
-                const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-                console.log(`\n${colors.blue}Test converting EST to local timezone (${timeZone})${colors.reset}`);
-                console.log(`${colors.yellow}Converted time: ${date.toLocaleString()}${colors.reset}`);
-                return !isNaN(date);
-            }
-        }
-    ]
 };
 
 // Run tests

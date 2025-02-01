@@ -41,5 +41,60 @@
     <script src="constants.js"></script>
     <script src="utils.js"></script>
     <script src="test_dates.js"></script>
+    <script>
+        // Function to run tests
+        function runTests() {
+            const resultsDiv = document.getElementById('results');
+            const summaryDiv = document.getElementById('summary');
+            let passed = 0;
+            let failed = 0;
+            let output = '';
+            
+            // Run tests for each category
+            Object.entries(TEST_CASES).forEach(([category, tests]) => {
+                output += `<h3>${category}</h3>`;
+                
+                tests.forEach((testCase, index) => {
+                    try {
+                        const date = parseDateString(testCase.input);
+                        const result = testCase.verify ? testCase.verify(date) : !isNaN(date) === testCase.expected;
+                        
+                        if (result) {
+                            passed++;
+                            output += `<p class="pass">✅ ${testCase.description}<br>`;
+                            if (!isNaN(date)) {
+                                output += `&nbsp;&nbsp;&nbsp;Input: "${testCase.input}" => ${date.toISOString()}</p>`;
+                            }
+                        } else {
+                            failed++;
+                            output += `<p class="fail">❌ ${testCase.description}<br>`;
+                            output += `&nbsp;&nbsp;&nbsp;Input: "${testCase.input}"<br>`;
+                            output += `&nbsp;&nbsp;&nbsp;Expected: ${testCase.expected}, Got: ${!isNaN(date)}</p>`;
+                        }
+                    } catch (error) {
+                        failed++;
+                        console.error(`Test case failed: ${testCase.description}`, error);
+                        output += `<p class="fail">❌ ${testCase.description}<br>`;
+                        output += `&nbsp;&nbsp;&nbsp;Input: "${testCase.input}"<br>`;
+                        output += `&nbsp;&nbsp;&nbsp;Error: ${error.message}</p>`;
+                    }
+                });
+            });
+            
+            resultsDiv.innerHTML = output;
+            
+            // Display summary
+            const total = Object.values(TEST_CASES).reduce((sum, tests) => sum + tests.length, 0);
+            summaryDiv.innerHTML = `
+                <h2>Test Summary:</h2>
+                <p>Total Tests: ${total}</p>
+                <p class="pass">Passed: ${passed}</p>
+                <p class="fail">Failed: ${failed}</p>
+            `;
+        }
+
+        // Run tests when the page loads
+        window.onload = runTests;
+    </script>
 </body>
 </html>
