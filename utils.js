@@ -7,22 +7,6 @@ function trimToMaxLength(str, maxLength = TIME_CONSTANTS.MAX_STRING_LENGTH) {
     return str.length > maxLength ? str.substring(0, maxLength) : str;
 }
 
-// DOM utilities
-function isVisible(element) {
-    if (!element) return false;
-    
-    try {
-        const style = window.getComputedStyle(element);
-        return style &&
-               style.display !== 'none' && 
-               style.visibility !== 'hidden' && 
-               parseFloat(style.opacity) > 0;
-    } catch (e) {
-        console.warn('Error checking visibility:', e);
-        return true;
-    }
-}
-
 // Date utilities
 function createDateTime(year, month, day, hours, minutes, seconds) {
     const now = new Date();
