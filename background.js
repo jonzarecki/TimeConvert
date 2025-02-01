@@ -76,18 +76,28 @@ async function handleDateConversion(selectedText, tabId) {
         // Parse the date
         const date = parseDateString(selectedText);
         if (isNaN(date)) {
-            await executeToastInTab(tabId, 'Invalid date format', true);
+            await executeToastInTab(tabId, '❌ Invalid date format', true);
             return;
         }
 
         // Format the date and show toast
         const isoDate = date.toISOString();
-        const message = `Converted date: ${date.toLocaleString()} (${isoDate})`;
+        const localDate = date.toLocaleString(undefined, {
+            weekday: 'short',
+            year: 'numeric',
+            month: 'short',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+            timeZoneName: 'short'
+        });
+        
+        const message = `✓ "${selectedText}"\n→ ${localDate}\n🔗 ${isoDate}`;
         await executeToastInTab(tabId, message);
     } catch (error) {
         console.error('Date conversion failed:', error);
         try {
-            await executeToastInTab(tabId, 'Failed to convert date', true);
+            await executeToastInTab(tabId, '❌ Failed to convert date', true);
         } catch (toastError) {
             console.error('Failed to show error toast:', toastError);
         }

@@ -12,16 +12,29 @@ function waitForToastify(callback) {
     }
 }
 
-function showToast(message, isError = false) {
+function showToast(message, isError = false, mouseX = null, mouseY = null) {
     waitForToastify(() => {
+        // Calculate position relative to mouse if coordinates are provided
+        const offset = 20; // pixels offset from mouse cursor
+        const position = mouseX !== null && mouseY !== null ? {
+            left: Math.min(mouseX + offset, window.innerWidth - 300), // prevent overflow
+            top: Math.min(mouseY + offset, window.innerHeight - 100)  // prevent overflow
+        } : {};
+
         Toastify({
             text: message,
             duration: 3000,
             close: false,
-            gravity: "top",
-            position: "center",
+            gravity: mouseY !== null ? false : "top", // disable gravity if we have mouse position
+            position: mouseY !== null ? false : "center", // disable default positioning if we have mouse position
             backgroundColor: isError ? "#FF0000" : "#4CAF50",
-            stopOnFocus: true
+            stopOnFocus: true,
+            offset: position,
+            style: mouseY !== null ? {
+                position: 'fixed',
+                left: position.left + 'px',
+                top: position.top + 'px'
+            } : {}
         }).showToast();
     });
 }
