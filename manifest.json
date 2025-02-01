@@ -2,23 +2,16 @@
   "manifest_version": 3,
   "name": "Date Converter",
   "version": "0.1.0",
-  "description": "Automatically detects and converts dates between different formats. Features date highlighting and contextual conversions button.",
+  "description": "Convert dates between different formats with a simple right-click. Features contextual date conversion.",
   "permissions": [
-    "activeTab",
+    "contextMenus",
+    "clipboardWrite",
     "scripting",
-    "contextMenus", "notifications", "clipboardRead", "clipboardWrite"
-  ],
-  "host_permissions": [
-    "*://*.google.com/*",
-    "*://mail.google.com/*"
+    "activeTab"
   ],
   "content_scripts": [
     {
-      "matches": [
-        "<all_urls>",
-        "*://*.google.com/*",
-        "*://mail.google.com/*"
-      ],
+      "matches": ["<all_urls>"],
       "css": ["toastify.css"],
       "js": [
         "toastify.js",
@@ -36,13 +29,5 @@
   "web_accessible_resources": [{
     "resources": ["constants.js", "utils.js"],
     "matches": ["<all_urls>"]
-  }],
-  "action": {
-    "default_popup": "popup.html",
-    "default_icon": {
-      "16": "icon.png",
-      "48": "icon.png",
-      "128": "icon.png"
-    }
-  }
+  }]
 }
