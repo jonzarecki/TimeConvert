@@ -2,23 +2,65 @@
 importScripts('shared.js', 'constants.js', 'utils.js');
 
 // Function to show toast in a tab
-async function executeToastInTab(tabId, message, isError = false) {
+async function executeToastInTab(tabId, message, isError = false, position = null) {
+    console.log('Showing toast with position:', position);
     await chrome.scripting.executeScript({
         target: { tabId },
-        func: (message, isError) => {
+        func: (message, isError, position) => {
+            // Calculate optimal position for toast
+            let toastPosition = 'center';
+            let toastGravity = 'top';
+            let offset = {};
+            
+            if (position) {
+                console.log('Window dimensions:', {
+                    width: window.innerWidth,
+                    height: window.innerHeight
+                });
+                
+                // Add minimal offset from the cursor position
+                const OFFSET_X = 10;  // pixels right of cursor
+                const OFFSET_Y = 10;  // pixels below cursor
+                
+                // Calculate if toast would overflow the window
+                const TOAST_WIDTH = 300;  // approximate toast width
+                const TOAST_HEIGHT = 100;  // approximate toast height
+                
+                // Start with the click position
+                let x = position.x;
+                let y = position.y + OFFSET_Y;
+                
+                // Adjust if would overflow right side
+                if (x + TOAST_WIDTH > window.innerWidth) {
+                    x = Math.max(0, position.x - TOAST_WIDTH);  // Place it to the left of the click
+                }
+                
+                // Adjust if would overflow bottom
+                if (y + TOAST_HEIGHT > window.innerHeight) {
+                    y = Math.max(0, position.y - TOAST_HEIGHT - OFFSET_Y);
+                }
+                
+                console.log('Final toast position:', { x, y });
+                offset = { x, y };
+                toastPosition = 'left';
+                toastGravity = 'top';
+            }
+
             Toastify({
                 text: message,
                 duration: 3000,
                 close: false,
-                gravity: "top",
-                position: "center",
+                gravity: toastGravity,
+                position: toastPosition,
+                offset: offset,
                 style: {
-                    background: isError ? "#FF0000" : "#4CAF50"
+                    background: isError ? "#FF0000" : "#4CAF50",
+                    'min-width': '300px'
                 },
                 stopOnFocus: true
             }).showToast();
         },
-        args: [message, isError]
+        args: [message, isError, position]
     });
 }
 
@@ -59,8 +101,13 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         chrome.contextMenus.update("convertDate", {
             visible: !isNaN(date)
         });
+        // Store the position for later use
+        lastMenuPosition = request.position;
+        console.log('Stored menu position:', lastMenuPosition);
     }
 });
+
+let lastMenuPosition = null;
 
 // Handle date conversion
 async function handleDateConversion(selectedText, tabId) {
@@ -76,7 +123,7 @@ async function handleDateConversion(selectedText, tabId) {
         // Parse the date
         const date = parseDateString(selectedText);
         if (isNaN(date)) {
-            await executeToastInTab(tabId, '❌ Invalid date format', true);
+            await executeToastInTab(tabId, '❌ Invalid date format', true, lastMenuPosition);
             return;
         }
 
@@ -97,12 +144,12 @@ async function handleDateConversion(selectedText, tabId) {
         });
         
         const message = `✓ "${selectedText}"\n→ ${localDate}\n🌐 ${timeZone}\n🔗 ${isoDate}`;
-        await executeToastInTab(tabId, message);
+        await executeToastInTab(tabId, message, false, lastMenuPosition);
     } catch (error) {
         console.error('Date conversion failed:', error);
         const errorMessage = error.message || error.toString();
         try {
-            await executeToastInTab(tabId, `❌ Error: ${errorMessage}`, true);
+            await executeToastInTab(tabId, `❌ Error: ${errorMessage}`, true, lastMenuPosition);
         } catch (toastError) {
             console.error('Failed to show error toast:', toastError);
         }
