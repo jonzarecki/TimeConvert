@@ -30,8 +30,7 @@ A powerful Chrome extension that automatically highlights dates and timezones on
 2. **Date Conversion**: 
    - Select any date text
    - Right-click and choose "Convert Date" from the context menu
-   - The ISO format will be copied to your clipboard
-   - A toast notification will show the converted date
+   - A toast notification will show the converted date in both localized and ISO formats
 
 ## Supported Date Formats
 

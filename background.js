@@ -80,44 +80,10 @@ async function handleDateConversion(selectedText, tabId) {
             return;
         }
 
-        // Format the date
+        // Format the date and show toast
         const isoDate = date.toISOString();
-        const message = `Converted date: ${date.toLocaleString()}`;
-
-        // Execute in content script context
-        await chrome.scripting.executeScript({
-            target: { tabId },
-            func: async (isoDate, message) => {
-                try {
-                    await navigator.clipboard.writeText(isoDate);
-                    Toastify({
-                        text: message,
-                        duration: 3000,
-                        close: false,
-                        gravity: "top",
-                        position: "center",
-                        style: {
-                            background: "#4CAF50"
-                        },
-                        stopOnFocus: true
-                    }).showToast();
-                } catch (error) {
-                    console.error('Clipboard operation failed:', error);
-                    Toastify({
-                        text: 'Failed to copy to clipboard',
-                        duration: 3000,
-                        close: false,
-                        gravity: "top",
-                        position: "center",
-                        style: {
-                            background: "#FF0000"
-                        },
-                        stopOnFocus: true
-                    }).showToast();
-                }
-            },
-            args: [isoDate, message]
-        });
+        const message = `Converted date: ${date.toLocaleString()} (${isoDate})`;
+        await executeToastInTab(tabId, message);
     } catch (error) {
         console.error('Date conversion failed:', error);
         try {

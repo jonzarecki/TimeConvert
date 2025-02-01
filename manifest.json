@@ -5,9 +5,7 @@
   "description": "Convert dates between different formats with a simple right-click. Features contextual date conversion.",
   "permissions": [
     "contextMenus",
-    "clipboardWrite",
-    "scripting",
-    "activeTab"
+    "scripting"
   ],
   "content_scripts": [
     {
