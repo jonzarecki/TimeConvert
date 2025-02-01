@@ -68,6 +68,51 @@ const TEST_CASES = {
         { input: "25:00", expected: false, description: "Invalid hours" },
         { input: "13/13/2024", expected: false, description: "Invalid month" },
         { input: "32/01/2024", expected: true, description: "Invalid day, smoothed by libraries to +1 day" }
+    ],
+    
+    TIMEZONE_CONVERSION_TESTS: [
+        {
+            input: "2024-01-31T10:00:00Z",  // UTC time
+            expected: true,
+            description: "UTC time conversion",
+            verify: (date) => {
+                const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+                console.log(`Test converting UTC to local timezone (${timeZone})`);
+                
+                // Get the expected offset in minutes for this timezone
+                const localDate = new Date(date);
+                const offsetMinutes = -localDate.getTimezoneOffset();
+                const offsetHours = Math.abs(Math.floor(offsetMinutes / 60));
+                const offsetMins = Math.abs(offsetMinutes % 60);
+                const offsetStr = `${offsetMinutes >= 0 ? '+' : '-'}${String(offsetHours).padStart(2, '0')}:${String(offsetMins).padStart(2, '0')}`;
+                
+                console.log(`Local timezone offset: ${offsetStr}`);
+                console.log(`Converted time: ${localDate.toLocaleString(undefined, {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    timeZone: timeZone,
+                    timeZoneName: 'short'
+                })}`);
+                
+                return !isNaN(date);
+            }
+        },
+        {
+            input: "18:00 EST",  // EST time
+            expected: true,
+            description: "EST to local timezone conversion",
+            verify: (date) => {
+                const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+                console.log(`Test converting EST to local timezone (${timeZone})`);
+                console.log(`Converted time: ${date.toLocaleString(undefined, {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    timeZone: timeZone,
+                    timeZoneName: 'short'
+                })}`);
+                return !isNaN(date);
+            }
+        }
     ]
 };
 

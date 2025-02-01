@@ -82,6 +82,9 @@ async function handleDateConversion(selectedText, tabId) {
 
         // Format the date and show toast
         const isoDate = date.toISOString();
+        
+        // Get timezone info
+        const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
         const localDate = date.toLocaleString(undefined, {
             weekday: 'short',
             year: 'numeric',
@@ -89,10 +92,11 @@ async function handleDateConversion(selectedText, tabId) {
             day: 'numeric',
             hour: '2-digit',
             minute: '2-digit',
+            timeZone: timeZone,
             timeZoneName: 'short'
         });
         
-        const message = `✓ "${selectedText}"\n→ ${localDate}\n🔗 ${isoDate}`;
+        const message = `✓ "${selectedText}"\n→ ${localDate}\n🌐 ${timeZone}\n🔗 ${isoDate}`;
         await executeToastInTab(tabId, message);
     } catch (error) {
         console.error('Date conversion failed:', error);
