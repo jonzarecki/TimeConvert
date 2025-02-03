@@ -3,6 +3,18 @@
   "name": "Date Converter",
   "version": "0.1.0",
   "description": "Convert dates between different formats with a simple right-click. Features contextual date conversion.",
+  "icons": {
+    "16": "arrows_icon.png",
+    "32": "icon.png",
+    "48": "icon.png",
+    "128": "icon.png"
+  },
+  "action": {
+    "default_icon": {
+      "16": "icon.png",
+      "32": "icon.png"
+    }
+  },
   "permissions": [
     "contextMenus",
     "scripting"

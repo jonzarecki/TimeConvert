@@ -49,13 +49,39 @@ async function executeToastInTab(tabId, message, isError = false, position = nul
             Toastify({
                 text: message,
                 duration: 3000,
-                close: false,
+                close: true,
                 gravity: toastGravity,
                 position: toastPosition,
                 offset: offset,
                 style: {
-                    background: isError ? "#FF0000" : "#4CAF50",
-                    'min-width': '300px'
+                    background: isError ? "linear-gradient(to right, #FF416C, #FF4B2B)" : "linear-gradient(to right, #00b09b, #96c93d)",
+                    'min-width': '300px',
+                    padding: '12px 20px',
+                    'border-radius': '8px',
+                    'box-shadow': '0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23)',
+                    'font-family': '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen-Sans, Ubuntu, Cantarell, "Helvetica Neue", sans-serif',
+                    'white-space': 'pre-line',
+                    'line-height': '1.5'
+                },
+                onClick: function() {
+                    // Copy ISO date to clipboard when clicked
+                    const isoDate = message.split('\n').find(line => line.startsWith('🔗'))?.substring(2);
+                    if (isoDate) {
+                        navigator.clipboard.writeText(isoDate).then(() => {
+                            Toastify({
+                                text: "✓ Copied to clipboard!",
+                                duration: 2000,
+                                gravity: "bottom",
+                                position: "right",
+                                style: {
+                                    background: "linear-gradient(to right, #00b09b, #96c93d)",
+                                    'border-radius': '4px',
+                                    'box-shadow': '0 2px 4px rgba(0,0,0,0.1)',
+                                    padding: '8px 16px'
+                                }
+                            }).showToast();
+                        });
+                    }
                 },
                 stopOnFocus: true
             }).showToast();
