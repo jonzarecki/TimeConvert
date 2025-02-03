@@ -5,7 +5,9 @@
     "main": "background.js",
     "scripts": {
         "test": "mocha tests/**/*.test.js",
-        "test:watch": "mocha tests/**/*.test.js --watch"
+        "test:watch": "mocha tests/**/*.test.js --watch",
+        "clean": "rm -rf dist",
+        "build": "npm run clean && mkdir -p dist && zip -r dist/date-highlighter.zip . -x '*.git*' '*node_modules*' '*tests*' '*dist*' '*.DS_Store' 'package-lock.json'"
     },
     "author": "",
     "license": "ISC",
