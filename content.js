@@ -1,12 +1,13 @@
 // Track context menu position
-let menuX = null;
-let menuY = null;
-
 let lastContextMenuPosition = { x: 0, y: 0 };
 
 // Listen for context menu events
 document.addEventListener('contextmenu', (e) => {
-    lastContextMenuPosition = { x: e.clientX, y: e.clientY };
+    // Store the exact screen coordinates
+    lastContextMenuPosition = {
+        x: e.clientX,
+        y: e.clientY
+    };
     console.log('Context menu opened at:', lastContextMenuPosition);
 });
 
@@ -15,6 +16,8 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     if (request.type === "showToast") {
         showToast(request.message, request.isError, lastContextMenuPosition.x, lastContextMenuPosition.y);
         sendResponse({success: true});
+    } else if (request.type === "getContextMenuPosition") {
+        sendResponse({position: lastContextMenuPosition});
     }
     return true;
 });
@@ -27,8 +30,7 @@ document.addEventListener('selectionchange', () => {
         lastSelectedText = selectedText;
         chrome.runtime.sendMessage({
             type: "updateContextMenu",
-            selectedText: selectedText,
-            position: lastContextMenuPosition
+            selectedText: selectedText
         });
     }
 });

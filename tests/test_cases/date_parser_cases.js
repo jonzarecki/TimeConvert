@@ -108,10 +108,4 @@ TEST_CASES.TIMEZONE_CONVERSION_TESTS = [
     createTimezoneTest("18:00 EST", "EST to local timezone conversion")
 ];
 
-// Export for Node.js, attach to window for browser
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { TEST_CASES, createTimezoneTest };
-} else if (typeof window !== 'undefined') {
-    window.TEST_CASES = TEST_CASES;
-    window.createTimezoneTest = createTimezoneTest;
-}
+module.exports = { TEST_CASES, createTimezoneTest }; 

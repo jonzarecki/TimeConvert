@@ -246,5 +246,75 @@ function parseDateString(text) {
 
 // Make functions available in both browser and Node.js environments
 if (typeof module !== 'undefined' && module.exports) {
-    module.exports = { parseDateString, padStringToFixedLength, showToast, waitForToastify };
+    module.exports = { 
+        parseDateString, 
+        padStringToFixedLength, 
+        showToast, 
+        waitForToastify,
+        calculateToastPosition 
+    };
 }
+
+// Test suite for toast positioning calculations
+function calculateToastPosition(position, windowDims, toastDims) {
+    const OFFSET_X = 5;
+    const OFFSET_Y = 5;
+
+    // Convert page coordinates to viewport coordinates
+    const viewportX = position.x; // - windowDims.scrollX;
+    const viewportY = position.y; // + windowDims.scrollY;
+
+    // Calculate available space in viewport
+    const spaceBelow = windowDims.height - viewportY;
+    const spaceAbove = viewportY;
+    const spaceRight = windowDims.width - viewportX;
+    const spaceLeft = viewportX;
+
+    console.log('Click position:', position);
+    console.log('Viewport position:', { viewportX, viewportY });
+    console.log('Available space:', {
+        below: spaceBelow,
+        above: spaceAbove,
+        right: spaceRight,
+        left: spaceLeft
+    });
+
+    // Start with viewport position
+    let x = viewportX;
+    let y = viewportY;
+
+    // Horizontal positioning
+    if (spaceRight >= toastDims.width + OFFSET_X) {
+        x = x + OFFSET_X;  // Right of cursor
+    } else if (spaceLeft >= toastDims.width + OFFSET_X) {
+        x = x - toastDims.width - OFFSET_X;  // Left of cursor
+    } else {
+        // Center horizontally if no good position
+        x = Math.max(OFFSET_X, Math.min(windowDims.width - toastDims.width - OFFSET_X, x - toastDims.width/2));
+    }
+
+    // Vertical positioning
+    if (viewportY < 0) {
+        // Cursor is above viewport
+        y = OFFSET_Y;
+    } else if (viewportY > windowDims.height) {
+        // Cursor is below viewport
+        y = windowDims.height - toastDims.height - OFFSET_Y;
+    } else if (spaceBelow >= toastDims.height + OFFSET_Y) {
+        y = y + OFFSET_Y;  // Below cursor
+    } else if (spaceAbove >= toastDims.height + OFFSET_Y) {
+        y = y - toastDims.height - OFFSET_Y;  // Above cursor
+    } else {
+        // If no good position, prefer the side with more space
+        y = (spaceBelow > spaceAbove) ?
+            Math.min(windowDims.height - toastDims.height - OFFSET_Y, y + OFFSET_Y) :
+            Math.max(OFFSET_Y, y - toastDims.height - OFFSET_Y);
+    }
+
+    // Ensure toast stays within viewport
+    x = Math.max(OFFSET_X, Math.min(windowDims.width - toastDims.width - OFFSET_X, x));
+    y = Math.max(OFFSET_Y, Math.min(windowDims.height - toastDims.height - OFFSET_Y, y));
+
+    return { x, y };
+}
+

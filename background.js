@@ -13,35 +13,30 @@ async function executeToastInTab(tabId, message, isError = false, position = nul
             let offset = {};
             
             if (position) {
-                console.log('Window dimensions:', {
+                // Get window dimensions
+                const windowDims = {
                     width: window.innerWidth,
                     height: window.innerHeight
-                });
+                };
                 
-                // Add minimal offset from the cursor position
-                const OFFSET_X = 10;  // pixels right of cursor
-                const OFFSET_Y = 10;  // pixels below cursor
-                
-                // Calculate if toast would overflow the window
-                const TOAST_WIDTH = 300;  // approximate toast width
-                const TOAST_HEIGHT = 100;  // approximate toast height
-                
-                // Start with the click position
-                let x = position.x;
-                let y = position.y + OFFSET_Y;
-                
-                // Adjust if would overflow right side
-                if (x + TOAST_WIDTH > window.innerWidth) {
-                    x = Math.max(0, position.x - TOAST_WIDTH);  // Place it to the left of the click
-                }
-                
-                // Adjust if would overflow bottom
-                if (y + TOAST_HEIGHT > window.innerHeight) {
-                    y = Math.max(0, position.y - TOAST_HEIGHT - OFFSET_Y);
-                }
-                
-                console.log('Final toast position:', { x, y });
-                offset = { x, y };
+                // Create a temporary toast to measure actual dimensions
+                const tempToast = document.createElement('div');
+                tempToast.style.visibility = 'hidden';
+                tempToast.style.position = 'fixed';
+                tempToast.style.padding = '12px 20px';
+                tempToast.style.maxWidth = '400px';
+                tempToast.innerHTML = message;
+                document.body.appendChild(tempToast);
+                const toastDims = {
+                    width: Math.min(tempToast.offsetWidth, 400),
+                    height: tempToast.offsetHeight
+                };
+                document.body.removeChild(tempToast);
+                console.log('Toast dimensions:', toastDims);
+
+                // Calculate optimal position using actual click position
+                offset = calculateToastPosition(position, windowDims, toastDims);
+                console.log('Final position:', offset);
                 toastPosition = 'left';
                 toastGravity = 'top';
             }
@@ -55,7 +50,9 @@ async function executeToastInTab(tabId, message, isError = false, position = nul
                 offset: offset,
                 style: {
                     background: isError ? "linear-gradient(to right, #FF416C, #FF4B2B)" : "linear-gradient(to right, #00b09b, #96c93d)",
-                    'min-width': '300px',
+                    'max-width': '400px',
+                    'min-width': '200px',
+                    width: 'auto',
                     padding: '12px 20px',
                     'border-radius': '8px',
                     'box-shadow': '0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23)',
@@ -116,7 +113,14 @@ chrome.runtime.onInstalled.addListener(() => {
 // Handle context menu clicks
 chrome.contextMenus.onClicked.addListener((info, tab) => {
     if (info.menuItemId === "convertDate") {
-        handleDateConversion(info.selectionText, tab.id);
+        // Get position from content script before handling conversion
+        chrome.tabs.sendMessage(tab.id, { type: "getContextMenuPosition" }, async (response) => {
+            if (response && response.position) {
+                await handleDateConversion(info.selectionText, tab.id, response.position);
+            } else {
+                await handleDateConversion(info.selectionText, tab.id, null);
+            }
+        });
     }
 });
 
@@ -127,16 +131,13 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
         chrome.contextMenus.update("convertDate", {
             visible: !isNaN(date)
         });
-        // Store the position for later use
-        lastMenuPosition = request.position;
-        console.log('Stored menu position:', lastMenuPosition);
+
     }
 });
 
-let lastMenuPosition = null;
 
 // Handle date conversion
-async function handleDateConversion(selectedText, tabId) {
+async function handleDateConversion(selectedText, tabId, position) {
     if (!selectedText || !tabId) {
         console.error('Missing required parameters:', { selectedText, tabId });
         return;
@@ -149,7 +150,7 @@ async function handleDateConversion(selectedText, tabId) {
         // Parse the date
         const date = parseDateString(selectedText);
         if (isNaN(date)) {
-            await executeToastInTab(tabId, '❌ Invalid date format', true, lastMenuPosition);
+            await executeToastInTab(tabId, '❌ Invalid date format', true, position);
             return;
         }
 
@@ -170,12 +171,12 @@ async function handleDateConversion(selectedText, tabId) {
         });
         
         const message = `✓ "${selectedText}"\n→ ${localDate}\n🌐 ${timeZone}\n🔗 ${isoDate}`;
-        await executeToastInTab(tabId, message, false, lastMenuPosition);
+        await executeToastInTab(tabId, message, false, position);
     } catch (error) {
         console.error('Date conversion failed:', error);
         const errorMessage = error.message || error.toString();
         try {
-            await executeToastInTab(tabId, `❌ Error: ${errorMessage}`, true, lastMenuPosition);
+            await executeToastInTab(tabId, `❌ Error: ${errorMessage}`, true, position);
         } catch (toastError) {
             console.error('Failed to show error toast:', toastError);
         }
