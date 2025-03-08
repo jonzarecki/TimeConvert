@@ -1,6 +1,7 @@
 # Date Converter Chrome Extension
 
 A Chrome extension that helps you convert dates between different formats with a simple right-click menu.
+[Store link](https://chromewebstore.google.com/detail/date-converter/bdfnkdjpoidjjjddpfcjicimgolgjfkk)
 
 ## Features
 
